@@ -1,0 +1,5 @@
+4d72ae7 Merge pull request #61 from neelabhg/readme_about_changes
+93b448d Changed footer about [skip ci]
+d1ff4b7 Add contributors to readme
+1520fe5 Merge pull request #60 from neelabhg/fix_editor_settings_popover_dismiss
+3a50a0c Fix the editor settings popover dismissing when clicking in it [skip ci]
