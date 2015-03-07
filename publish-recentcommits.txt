@@ -1,5 +1,5 @@
-765c64e Merge pull request #68 from neelabhg/new_prod_url
-a124e4b Add GA tracking code for new production URL
-ce0dda3 Update footer text
-4002c69 readme formatting and jor1k licence (need to update jor1k fork too) [skip ci]
-02c288e readme formatting
+ea1c853 Added xdomain dependency
+2067737 Removed sysassets download from deployment
+b760b00 Changed string constants to reference sysassets deployment
+f38fe3d Merge pull request #79 from neelabhg/add_code_style_check
+ac61b68 Add dependency status badge from Gemnasium
