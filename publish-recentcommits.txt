@@ -1,5 +1,5 @@
-689b40e Fixed issue defining slave
-ea1c853 Added xdomain dependency
-2067737 Removed sysassets download from deployment
-b760b00 Changed string constants to reference sysassets deployment
-f38fe3d Merge pull request #79 from neelabhg/add_code_style_check
+f146b2a Merge branch 'siddharth-seth-Issue#21-Highlight_tokens'
+51dbd3d merge master and @siddharth-seth's branch and fix merge conflicts
+7da0780 Merge pull request #80 from anant-singh/Issue#75-Notifications
+1269cfd WIP(Issue#21) - Highlighting tokens corresponding to man pages
+2e743ce VM Status Notification and Compile Button UI:
