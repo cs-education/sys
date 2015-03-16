@@ -1,5 +1,5 @@
+c9ea6a8 Merge branch 'master' of https://github.com/cs-education/sysbuild into captions
+e59b663 Switched assets url to cs-education
 f146b2a Merge branch 'siddharth-seth-Issue#21-Highlight_tokens'
 51dbd3d merge master and @siddharth-seth's branch and fix merge conflicts
-7da0780 Merge pull request #80 from anant-singh/Issue#75-Notifications
-1269cfd WIP(Issue#21) - Highlighting tokens corresponding to man pages
-2e743ce VM Status Notification and Compile Button UI:
+6c6ca8f Manual merge from upstream
