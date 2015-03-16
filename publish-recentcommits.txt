@@ -1,5 +1,5 @@
+902d3b1 Merge pull request #84 from scowalt/captions
+574ac30 Merge pull request #86 from scowalt/videojs-version
 c9ea6a8 Merge branch 'master' of https://github.com/cs-education/sysbuild into captions
+c225bf8 Upgraded videojs version
 e59b663 Switched assets url to cs-education
-f146b2a Merge branch 'siddharth-seth-Issue#21-Highlight_tokens'
-51dbd3d merge master and @siddharth-seth's branch and fix merge conflicts
-6c6ca8f Manual merge from upstream
