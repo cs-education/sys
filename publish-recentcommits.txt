@@ -1,5 +1,5 @@
-902d3b1 Merge pull request #84 from scowalt/captions
-574ac30 Merge pull request #86 from scowalt/videojs-version
-c9ea6a8 Merge branch 'master' of https://github.com/cs-education/sysbuild into captions
-c225bf8 Upgraded videojs version
-e59b663 Switched assets url to cs-education
+23262cd English text track now default
+daa1983 Using transcriptions from cs-education sysassets
+51e54b3 Captions work off of scowalt.com site
+acea537 Merge pull request #90 from anant-singh/Issue#88-BugFix
+5506dfd Bugfix#88: Updating the build code to copy notific8 plugins
