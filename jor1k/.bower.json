@@ -4,10 +4,10 @@
   "_release": "73e436a3e5",
   "_resolution": {
     "type": "branch",
-    "branch": "master",
+    "branch": "sysbuild-stable",
     "commit": "73e436a3e543e6e439cdaf23dae809039ff6ac4a"
   },
   "_source": "https://github.com/cs-education/jor1k.git",
-  "_target": "master",
+  "_target": "sysbuild-stable",
   "_originalSource": "https://github.com/cs-education/jor1k.git"
 }
