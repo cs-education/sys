@@ -1,5 +1,5 @@
-bb77210 Trying out removing xdmoain
-ea4f1c4 Merge branch 'master' of https://github.com/cs-education/sysbuild into captions
-05491af Merge pull request #95 from neelabhg/fixes
-42ac97a Fix grunt test phantom js timeout: mocha version 2.2.x does not work with current testing setup, probably because of grunt-mocha. I have tried debugging, the issue does not seem to be any configuration or code we have written. grunt-mocha's latest supported version of mocha is 1.21.5, so we should ideally be using that version. But 2.1.0 works, so using that.
-206047d update bower test dependencies
+fbe84b7 Merge pull request #94 from jdtran23/search_feature
+c52a4e0 line feeds are important
+02f947f hopefully fixing videojs reference error in travis
+360d703 Addressing style issues pointed out in travis
+d19169d generated changes from bower install

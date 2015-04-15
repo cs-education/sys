@@ -1,13 +1,13 @@
 {
   "name": "jor1k",
   "homepage": "https://github.com/cs-education/jor1k",
-  "_release": "73e436a3e5",
+  "_release": "9eae8fc08f",
   "_resolution": {
     "type": "branch",
-    "branch": "sysbuild-stable",
-    "commit": "73e436a3e543e6e439cdaf23dae809039ff6ac4a"
+    "branch": "master",
+    "commit": "9eae8fc08f949c848a1b148f5dcb78b4eb25c23d"
   },
   "_source": "https://github.com/cs-education/jor1k.git",
-  "_target": "sysbuild-stable",
+  "_target": "master",
   "_originalSource": "https://github.com/cs-education/jor1k.git"
 }
