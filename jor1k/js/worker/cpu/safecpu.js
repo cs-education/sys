@@ -2,10 +2,6 @@
 // -------------------- CPU ------------------------
 // -------------------------------------------------
 
-"use strict";
-var message = require('../messagehandler');
-var utils = require('../utils');
-
 // special purpose register index
 var SPR_UPR = 1; // unit present register
 var SPR_SR = 17; // supervision register
@@ -27,8 +23,7 @@ var EXCEPT_DPF = 0x300; // instruction page fault
 var EXCEPT_BUSERR = 0x200; // wrong memory access
 var EXCEPT_TICK = 0x500; // tick counter interrupt
 var EXCEPT_INT = 0x800; // interrupt of external devices
-var EXCEPT_SYSCALL = 0xC00; // syscall, jump into supervisor mode
-var EXCEPT_TRAP = 0xE00; // syscall, jump into supervisor mode
+var EXCEPT_SYSCALL = 0xc00; // syscall, jump into supervisor mode
 
 // constructor
 function SafeCPU(ram) {
@@ -37,17 +32,21 @@ function SafeCPU(ram) {
     // registers
     // r[32] and r[33] are used to calculate the virtual address and physical address
     // to make sure that they are not transformed accidently into a floating point number
-    this.r = new Int32Array(this.ram.heap, 0, 34 << 2);
-    this.f = new Float32Array(this.ram.heap, 0, 32 << 2);
+    var array = new ArrayBuffer(34 << 2);
+    this.r = new Int32Array(array);
+    this.f = new Float32Array(array);
 
     // special purpose registers
-    this.group0 = new Int32Array(this.ram.heap, 0x2000, 0x2000);
+    array = new ArrayBuffer(1024 << 2);
+    this.group0 = new Int32Array(array);
 
     // data tlb
-    this.group1 = new Int32Array(this.ram.heap, 0x4000, 0x2000);
+    array = new ArrayBuffer(1024 << 2);
+    this.group1 = new Int32Array(array);
 
     // instruction tlb
-    this.group2 = new Int32Array(this.ram.heap, 0x6000, 0x2000);
+    array = new ArrayBuffer(1024 << 2);
+    this.group2 = new Int32Array(array);
 
     // define variables and initialize
     this.pc = 0x0; // instruction pointer in multiples of four
@@ -57,8 +56,6 @@ function SafeCPU(ram) {
     this.delayedins = false; // the current instruction is an delayed instruction, one cycle before a jump
 
     this.clock = 0x0;
-
-    this.EA = -1; // hidden register for atomic lwa operation
 
     this.TTMR = 0x0; // Tick timer mode register
     this.TTCR = 0x0; // Tick timer count register
@@ -85,6 +82,7 @@ function SafeCPU(ram) {
     this.SR_FO = true; // Fixed One, always set
     this.SR_SUMRA = false; // SPRS User Mode Read Access, or TRAP exception disable?
     this.SR_CID = 0x0; //Context ID
+
     
     this.Reset();
 }
@@ -97,16 +95,6 @@ SafeCPU.prototype.Reset = function() {
 
     this.group0[SPR_IMMUCFGR] = 0x18; // 0 ITLB has one way and 64 sets
     this.group0[SPR_DMMUCFGR] = 0x18; // 0 DTLB has one way and 64 sets
-    this.group0[SPR_ICCFGR] = 0x48;
-    this.group0[SPR_DCCFGR] = 0x48;
-    this.group0[SPR_VR] = 0x12000001;
-
-    // UPR present
-    // data mmu present
-    // instruction mmu present
-    // PIC present (architecture manual seems to be wrong here)
-    // Tick timer present
-    this.group0[SPR_UPR] = 0x619;
 
     this.Exception(EXCEPT_RESET, 0x0); // set pc values
     this.pc = this.nextpc;
@@ -122,11 +110,6 @@ SafeCPU.prototype.GetTimeToNextInterrupt = function () {
     var delta = (this.TTMR & 0xFFFFFFF) - (this.TTCR & 0xFFFFFFF);
     delta += delta<0?0xFFFFFFF:0x0;
     return delta;
-}
-
-SafeCPU.prototype.GetTicks = function () {
-    if ((this.TTMR >> 30) == 0) return -1;
-    return this.TTCR & 0xFFFFFFF;
 }
 
 SafeCPU.prototype.ProgressTime = function (delta) {
@@ -165,20 +148,20 @@ SafeCPU.prototype.SetFlags = function (x) {
     this.SR_SUMRA = (x & (1 << 16)) ? true : false;
     this.SR_CID = (x >> 28) & 0xF;
     if (this.SR_LEE) {
-        message.Debug("little endian not supported");
-        message.Abort();
+        DebugMessage("little endian not supported");
+        abort();
     }
     if (this.SR_CID) {
-        message.Debug("context id not supported");
-        message.Abort();
+        DebugMessage("context id not supported");
+        abort();
     }
     if (this.SR_EPH) {
-        message.Debug("exception prefix not supported");
-        message.Abort();
+        DebugMessage("exception prefix not supported");
+        abort();
     }
     if (this.SR_DSX) {
-        message.Debug("delay slot exception not supported");
-        message.Abort();
+        DebugMessage("delay slot exception not supported");
+        abort();
     }
     if (this.SR_IEE && !old_SR_IEE) {
         this.CheckForInterrupt();
@@ -218,13 +201,19 @@ SafeCPU.prototype.CheckForInterrupt = function () {
     }
 };
 
-SafeCPU.prototype.RaiseInterrupt = function (line, cpuid) {
+SafeCPU.prototype.RaiseInterrupt = function (line) {
     var lmask = 1 << line;
+/*
+    if (this.PICSR & lmask) {
+        // Interrupt already signaled and pending
+        // DebugMessage("Warning: Int pending, ignored");
+    }
+*/
     this.PICSR |= lmask;
     this.CheckForInterrupt();
 };
 
-SafeCPU.prototype.ClearInterrupt = function (line, cpuid) {
+SafeCPU.prototype.ClearInterrupt = function (line) {
     this.PICSR &= ~(1 << line);
 };
 
@@ -233,27 +222,19 @@ SafeCPU.prototype.SetSPR = function (idx, x) {
     var group = (idx >> 11) & 0x1F;
 
     switch (group) {
-    case 0:
-        if (address == SPR_SR) {
-            this.SetFlags(x);
-        }
-        this.group0[address] = x;
-        break;
     case 1:
         // Data MMU
         this.group1[address] = x;
-        break;
+        return;
     case 2:
         // ins MMU
         this.group2[address] = x;
-        break;
+        return;
     case 3:
         // data cache, not supported
     case 4:
         // ins cache, not supported
-        break;
-    case 8:
-        break;
+        return;
     case 9:
         // pic
         switch (address) {
@@ -262,42 +243,61 @@ SafeCPU.prototype.SetSPR = function (idx, x) {
             // check immediate for interrupt
             if (this.SR_IEE) {
                 if (this.PICMR & this.PICSR) {
-                    message.Debug("Error in SetSPR: Direct triggering of interrupt exception not supported?");
-                    message.Abort();
+                    DebugMessage("Error in SetSPR: Direct triggering of interrupt exception not supported?");
+                    abort();
                 }
             }
             break;
-        case 2: // PICSR
+        case 2:
+            this.PICSR = x;
             break;
         default:
-            message.Debug("Error in SetSPR: interrupt address not supported");
-            message.Abort();
+            DebugMessage("Error in SetSPR: interrupt address not supported");
+            abort();
         }
-        break;
+        return;
     case 10:
         //tick timer
         switch (address) {
         case 0:
             this.TTMR = x;
             if (((this.TTMR >> 30)&3) != 0x3) {
-                //message.Debug("Error in SetSPR: Timer mode other than continuous not supported");
-                //message.Abort();
+                DebugMessage("Error in SetSPR: Timer mode other than continuous not supported");
+                abort();
             }
             break;
-        case 1:
-            this.TTCR = x;
-            break;
         default:
-            message.Debug("Error in SetSPR: Tick timer address not supported");
-            message.Abort();
+            DebugMessage("Error in SetSPR: Tick timer address not supported");
+            abort();
             break;
         }
-        break;
+        return;
 
     default:
-        message.Debug("Error in SetSPR: group " + group + " not found");
-        message.Abort();
         break;
+    }
+
+    if (group != 0) {
+        DebugMessage("Error in SetSPR: group " + group + " not found");
+        abort();
+    }
+
+    switch (address) {
+    case SPR_SR:
+        this.SetFlags(x);
+        break;
+    case SPR_EEAR_BASE:
+        this.group0[SPR_EEAR_BASE] = x;
+        break;
+    case SPR_EPCR_BASE:
+        this.group0[SPR_EPCR_BASE] = x;
+        break;
+    case SPR_ESR_BASE:
+        this.group0[SPR_ESR_BASE] = x;
+        break;
+    default:
+        DebugMessage("Error in SetSPR: address " + hex8(address) + " not found");
+        abort();
     }
 };
 
@@ -306,17 +306,10 @@ SafeCPU.prototype.GetSPR = function (idx) {
     var group = (idx >> 11) & 0x1F;
 
     switch (group) {
-    case 0:
-        if (address == SPR_SR) {
-            return this.GetFlags();
-        }
-        return this.group0[address];
     case 1:
         return this.group1[address];
     case 2:
         return this.group2[address];
-    case 8:
-        return 0x0;
 
     case 9:
         // pic
@@ -326,8 +319,8 @@ SafeCPU.prototype.GetSPR = function (idx) {
         case 2:
             return this.PICSR;
         default:
-            message.Debug("Error in GetSPR: PIC address unknown");
-            message.Abort();
+            DebugMessage("Error in GetSPR: PIC address unknown");
+            abort();
             break;
         }
         break;
@@ -340,27 +333,57 @@ SafeCPU.prototype.GetSPR = function (idx) {
         case 1:
             return this.TTCR; // or clock
         default:
-            message.Debug("Error in GetSPR: Tick timer address unknown");
-            message.Abort();
+            DebugMessage("Error in GetSPR: Tick timer address unknown");
+            abort();
             break;
         }
         break;
     default:
-        message.Debug("Error in GetSPR: group " + group +  " unknown");
-        message.Abort();
         break;
     }
 
+    if (group != 0) {
+        DebugMessage("Error in GetSPR: group " + group +  " unknown");
+        abort();
+    }
+
+    switch (idx) {
+    case SPR_SR:
+        return this.GetFlags();
+
+    case SPR_UPR:
+        // UPR present
+        // data mmu present
+        // instruction mmu present
+        // PIC present (architecture manual seems to be wrong here)
+        // Tick timer present
+        return 0x619;
+
+    case SPR_IMMUCFGR:
+    case SPR_DMMUCFGR:
+    case SPR_EEAR_BASE:
+    case SPR_EPCR_BASE:
+    case SPR_ESR_BASE:
+        return this.group0[idx];
+    case SPR_ICCFGR:
+        return 0x48;
+    case SPR_DCCFGR:
+        return 0x48;
+    case SPR_VR:
+        return 0x12000001;
+    default:
+        DebugMessage("Error in GetSPR: address unknown");
+        abort();
+    }
 };
 
 SafeCPU.prototype.Exception = function (excepttype, addr) {
     var except_vector = excepttype | (this.SR_EPH ? 0xf0000000 : 0x0);
-    //message.Debug("Info: Raising Exception " + utils.ToHex(excepttype));
+    //DebugMessage("Info: Raising Exception " + hex8(excepttype));
 
     this.SetSPR(SPR_EEAR_BASE, addr);
     this.SetSPR(SPR_ESR_BASE, this.GetFlags());
 
-    this.EA = -1;
     this.SR_OVE = false;
     this.SR_SM = true;
     this.SR_IEE = false;
@@ -380,7 +403,6 @@ SafeCPU.prototype.Exception = function (excepttype, addr) {
     case EXCEPT_BUSERR:
     case EXCEPT_TICK:
     case EXCEPT_INT:
-    case EXCEPT_TRAP:
         this.SetSPR(SPR_EPCR_BASE, (this.pc<<2) - (this.delayedins ? 4 : 0));
         break;
 
@@ -388,15 +410,9 @@ SafeCPU.prototype.Exception = function (excepttype, addr) {
         this.SetSPR(SPR_EPCR_BASE, (this.pc<<2) + 4 - (this.delayedins ? 4 : 0));
         break;
     default:
-        message.Debug("Error in Exception: exception type not supported");
-        message.Abort();
+        DebugMessage("Error in Exception: exception type not supported");
+        abort();
     }
-
-    // Handle restart mode timer
-    if (excepttype == EXCEPT_TICK && (this.TTMR >> 30) == 0x1) {
-	this.TTCR = 0;
-    }
-
     this.delayedins = false;
     this.SR_IME = false;
 };
@@ -418,8 +434,8 @@ SafeCPU.prototype.DTLBLookup = function (addr, write) {
     }
         // set lru 
         if (tlmbr & 0xC0) {
-            message.Debug("Error: LRU ist not supported");
-            message.Abort();
+            DebugMessage("Error: LRU ist not supported");
+            abort();
         }
     
     var tlbtr = this.group1[0x280 | setindex]; // translate register
@@ -465,8 +481,8 @@ SafeCPU.prototype.GetInstruction = function (addr) {
     }
     // set lru
     if (tlmbr & 0xC0) {
-        message.Debug("Error: LRU ist not supported");
-        message.Abort();
+        DebugMessage("Error: LRU ist not supported");
+        abort();
     }
 
     var tlbtr = this.group2[0x280 | setindex];
@@ -590,21 +606,20 @@ SafeCPU.prototype.Step = function (steps, clockspeed) {
             rindex = (ins >> 21) & 0x1F;
             // if 16th bit is set
             if (ins & 0x10000) {
-                message.Debug("Error: macrc not supported\n");
-                message.Abort();
+                DebugMessage("Error: macrc not supported\n");
+                abort();
             } else {
                 r[rindex] = ((ins & 0xFFFF) << 16); // movhi
             }
             break;
+        case 0x7: 
+            // halt
+            // the safe cpu should ignore it for now. 
+        break;
 
         case 0x8:
-            // sys and trap
-            if ((ins&0xFFFF0000) == 0x21000000) {
-                message.Debug("Trap at " + utils.ToHex(this.pc<<2));
-                this.Exception(EXCEPT_TRAP, this.group0[SPR_EEAR_BASE]);
-            } else {
-                this.Exception(EXCEPT_SYSCALL, this.group0[SPR_EEAR_BASE]);
-            }
+            //sys
+            this.Exception(EXCEPT_SYSCALL, this.group0[SPR_EEAR_BASE]);
             break;
 
         case 0x9:
@@ -632,26 +647,11 @@ SafeCPU.prototype.Step = function (steps, clockspeed) {
             continue;
 
         case 0x1B:
-            // lwa
-            r[32] = r[(ins >> 16) & 0x1F] + ((ins << 16) >> 16);
-            if ((r[32] & 3) != 0) {
-                message.Debug("Error in lwz: no unaligned access allowed");
-                abort();
-            }
-            r[33] = this.DTLBLookup(r[32], false);
-            if (r[33] == -1) {
-                break;
-            }
-            this.EA = r[33];
-            r[(ins >> 21) & 0x1F] = r[33]>0?ram.int32mem[r[33] >> 2]:ram.ReadMemory32(r[33]);
-            break;
-
-
         case 0x21:
-            // lwz
+            // lwa and lwz
             r[32] = r[(ins >> 16) & 0x1F] + ((ins << 16) >> 16);
             if ((r[32] & 3) != 0) {
-                message.Debug("Error in lwz: no unaligned access allowed");
+                DebugMessage("Error in lwz: no unaligned access allowed");
                 abort();
             }
             r[33] = this.DTLBLookup(r[32], false);
@@ -750,7 +750,7 @@ SafeCPU.prototype.Step = function (steps, clockspeed) {
                 r[(ins >> 21) & 0x1F] = r[(ins >> 16) & 0x1F] >> (ins & 0x1F);
                 break;
             default:
-                message.Debug("Error: opcode 2E function not implemented");
+                DebugMessage("Error: opcode 2E function not implemented");
                 abort();
                 break;
             }
@@ -801,7 +801,7 @@ SafeCPU.prototype.Step = function (steps, clockspeed) {
                 this.SR_F = (r[(ins >> 16) & 0x1F] <= imm) ? true : false;
                 break;
             default:
-                message.Debug("Error: sf...i not supported yet");
+                DebugMessage("Error: sf...i not supported yet");
                 abort();
                 break;
             }
@@ -874,8 +874,8 @@ SafeCPU.prototype.Step = function (steps, clockspeed) {
                 this.SR_F = (f[rA] <= f[rB]) ? true : false;
                 break;
             default:
-                message.Debug("Error: lf. function " + utils.ToHex(ins & 0xFF) + " not supported yet");
-                message.Abort();
+                DebugMessage("Error: lf. function " + hex8(ins & 0xFF) + " not supported yet");
+                abort();
                 break;
             }
             break;
@@ -885,23 +885,19 @@ SafeCPU.prototype.Step = function (steps, clockspeed) {
             imm = ((((ins >> 10) & 0xF800) | (ins & 0x7FF)) << 16) >> 16;
             r[32] = r[(ins >> 16) & 0x1F] + imm;
             if (r[32] & 0x3) {
-                message.Debug("Error in sw: no aligned memory access");
+                DebugMessage("Error in sw: no aligned memory access");
                 abort();
             }
             r[33] = this.DTLBLookup(r[32], true);
             if (r[33] == -1) {
                 break;
             }
-            this.SR_F = (r[33] == this.EA)?true:false;
-            this.EA = -1;
-            if (this.SR_F == false) {
-                break;
-            }
-            if (r[33] > 0) {
+            if (r[33]>0) {
                 int32mem[r[33] >> 2] = r[(ins >> 11) & 0x1F];
             } else {
                 ram.WriteMemory32(r[33], r[(ins >> 11) & 0x1F]);
             }
+            this.SR_F = true;
             break;
             
         case 0x35:
@@ -909,8 +905,8 @@ SafeCPU.prototype.Step = function (steps, clockspeed) {
             imm = ((((ins >> 10) & 0xF800) | (ins & 0x7FF)) << 16) >> 16;
             r[32] = r[(ins >> 16) & 0x1F] + imm;
             if (r[32] & 0x3) {
-                message.Debug("Error in sw: no aligned memory access");
-                message.Abort();
+                DebugMessage("Error in sw: no aligned memory access");
+                abort();
             }
             r[33] = this.DTLBLookup(r[32], true);
             if (r[33] == -1) {
@@ -1014,13 +1010,13 @@ SafeCPU.prototype.Step = function (steps, clockspeed) {
                 // mul signed (specification seems to be wrong)
                 {
                     // this is a hack to do 32 bit signed multiply. Seems to work but needs to be tested. 
-                    r[rindex] = utils.int32(rA >> 0) * utils.int32(rB);
+                    r[rindex] = int32(rA >> 0) * int32(rB);
                     var rAl = rA & 0xFFFF;
                     var rBl = rB & 0xFFFF;
                     r[rindex] = r[rindex] & 0xFFFF0000 | ((rAl * rBl) & 0xFFFF);
-                    var result = Number(utils.int32(rA)) * Number(utils.int32(rB));
+                    var result = Number(int32(rA)) * Number(int32(rB));
                     this.SR_OV = (result < (-2147483647 - 1)) || (result > (2147483647));
-                    var uresult = utils.uint32(rA) * utils.uint32(rB);
+                    var uresult = uint32(rA) * uint32(rB);
                     this.SR_CY = (uresult > (4294967295));
                 }
                 break;
@@ -1042,8 +1038,8 @@ SafeCPU.prototype.Step = function (steps, clockspeed) {
 
                 break;
             default:
-                message.Debug("Error: op38 opcode not supported yet");
-                message.Abort();
+                DebugMessage("Error: op38 opcode not supported yet");
+                abort();
                 break;
             }
             break;
@@ -1092,14 +1088,14 @@ SafeCPU.prototype.Step = function (steps, clockspeed) {
                 this.SR_F = (r[(ins >> 16) & 0x1F] <= r[(ins >> 11) & 0x1F]) ? true : false;
                 break;
             default:
-                message.Debug("Error: sf.... function supported yet");
-                message.Abort();
+                DebugMessage("Error: sf.... function supported yet");
+                abort();
             }
             break;
 
         default:
-            message.Debug("Error: Instruction with opcode " + utils.ToHex(ins >>> 26) + " not supported");
-            message.Abort();
+            DebugMessage("Error: Instruction with opcode " + hex8(ins >>> 26) + " not supported");
+            abort();
             break;
         }
 
@@ -1110,5 +1106,3 @@ SafeCPU.prototype.Step = function (steps, clockspeed) {
     return 0;
 };
 
-
-module.exports = SafeCPU;
