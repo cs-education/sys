@@ -1,5 +1,5 @@
-fbe84b7 Merge pull request #94 from jdtran23/search_feature
-c52a4e0 line feeds are important
-02f947f hopefully fixing videojs reference error in travis
-360d703 Addressing style issues pointed out in travis
-d19169d generated changes from bower install
+8a77fa4 Removed unneeded log statement
+463b009 Refactored video player configuration
+d919d95 idk what's going on with this library
+2ebe0fb Attempting to merge upstream changes
+1a7c4cc Removed another automatic change
