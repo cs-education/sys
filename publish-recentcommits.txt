@@ -1,5 +1,5 @@
+3e8213e FINALLY fixed video subtitles
 8a77fa4 Removed unneeded log statement
 463b009 Refactored video player configuration
 d919d95 idk what's going on with this library
 2ebe0fb Attempting to merge upstream changes
-1a7c4cc Removed another automatic change
