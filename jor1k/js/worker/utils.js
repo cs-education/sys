@@ -2,26 +2,6 @@
 // ------------------ Utils ------------------------
 // -------------------------------------------------
 
-function SendToMaster(command, data) {
-    postMessage(
-    {
-        "command" : command,
-        "data" : data
-    }
-    );
-}
-
-function DebugMessage(message) {
-    SendToMaster("Debug", message);
-}
-
-function abort() {
-    DebugMessage("Abort execution.");
-    SendToMaster("Stop");
-    sys.PrintState();
-    throw new Error('Kill worker');
-}
-
 function GetMilliseconds() {
     return (new Date()).getTime();
 }
@@ -45,7 +25,7 @@ function uint32(val) {
     return (val >>> 0);
 }
 
-function hex8(x) {
+function ToHex(x) {
     var val = uint32(x);
     return ("0x" + ("00000000" + val.toString(16)).substr(-8).toUpperCase());
 }
@@ -88,6 +68,23 @@ function LoadBinaryResource(url, OnSuccess, OnError) {
     req.send(null);
 }
 
+function LoadTextResource(url, OnSuccess, OnError) {
+    var req = new XMLHttpRequest();
+    req.open('GET', url, true);
+    //req.overrideMimeType('text/xml');
+    req.onreadystatechange = function () {
+        if (req.readyState != 4) {
+            return;
+        }
+        if ((req.status != 200) && (req.status != 0)) {
+            OnError("Error: Could not load text file " + url);
+            return;
+        }
+        OnSuccess(req.responseText);
+    };
+    req.send(null);
+}
+
 function DownloadAllAsync(urls, OnSuccess, OnError) {
     var pending = urls.length;
     var result = [];
@@ -116,3 +113,69 @@ function DownloadAllAsync(urls, OnSuccess, OnError) {
         );
     });
 }
+
+function UploadBinaryResource(url, filename, data, OnSuccess, OnError) {
+
+    var boundary = "xxxxxxxxx";
+
+    var xhr = new XMLHttpRequest();
+    xhr.open('post', url, true);
+    xhr.setRequestHeader("Content-Type", "multipart/form-data, boundary=" + boundary);
+    xhr.setRequestHeader("Content-Length", data.length);
+    xhr.onreadystatechange = function () {
+        if (req.readyState != 4) {
+            return;
+        }
+        if ((req.status != 200) && (xhr.status != 0)) {
+            OnError("Error: Could not upload file " + filename);
+            return;
+        }
+        OnSuccess(this.responseText);
+    };
+
+    var bodyheader = "--" + boundary + "\r\n";
+    bodyheader += 'Content-Disposition: form-data; name="uploaded"; filename="' + filename + '"\r\n';
+    bodyheader += "Content-Type: application/octet-stream\r\n\r\n";
+
+    var bodyfooter = "\r\n";
+    bodyfooter += "--" + boundary + "--";
+
+    var newdata = new Uint8Array(data.length + bodyheader.length + bodyfooter.length);
+    var offset = 0;
+    for(var i=0; i<bodyheader.length; i++)
+        newdata[offset++] = bodyheader.charCodeAt(i);
+
+    for(var i=0; i<data.length; i++)
+        newdata[offset++] = data[i];
+
+
+    for(var i=0; i<bodyfooter.length; i++)
+        newdata[offset++] = bodyfooter.charCodeAt(i);
+
+    xhr.send(newdata.buffer);
+}
+
+/*
+function LoadBZIP2Resource(url, OnSuccess, OnError)
+{
+    var worker = new Worker('bzip2.js');
+    worker.onmessage = function(e) {
+        OnSuccess(e.data);
+    }    
+    worker.onerror = function(e) {
+        OnError("Error at " + e.filename + ":" + e.lineno + ": " + e.message);
+    }
+    worker.postMessage(url);    
+}
+*/
+
+
+module.exports.GetMilliseconds = GetMilliseconds;
+module.exports.Swap32 = Swap32;
+module.exports.Swap16 = Swap16;
+module.exports.int32 = int32;
+module.exports.uint32 = uint32;
+module.exports.ToHex = ToHex;
+module.exports.LoadBinaryResource = LoadBinaryResource;
+module.exports.LoadTextResource = LoadTextResource;
+
