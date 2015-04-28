@@ -1,0 +1,13 @@
+{
+  "name": "jor1k",
+  "homepage": "https://github.com/cs-education/jor1k",
+  "_release": "c366c617d7",
+  "_resolution": {
+    "type": "branch",
+    "branch": "sysbuild-stable",
+    "commit": "c366c617d71996153f76fe834376fb3fc54a94ea"
+  },
+  "_source": "https://github.com/cs-education/jor1k.git",
+  "_target": "sysbuild-stable",
+  "_originalSource": "https://github.com/cs-education/jor1k.git"
+}
