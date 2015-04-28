@@ -1,5 +1,5 @@
-571fa5e Like earlier, jor1k expects an element id to write vm stats to, so we use that instead of using SysViewModel - now we don't need a custom copy of jor1k-master anymore. The vm-stats span changes often in width due to varying speeds of the VM, so made the span a fixed-width inline block element. No need for separate jor1k build block as there is only one file - which is now included in the main js build block.
-4a97402 Remove jor1k_hd_images as they are no longer needed. They have been moved to sysassets for reference/archival purposes.
-3fc8367 The extended filesystem is now served from sysassets
-06fb7da merge upstream's master
-a1583ad Merge pull request #97 from scowalt/captions
+033ce13 is master branch broken?
+ff61ad5 why is it broken??
+d069281 Merge remote-tracking branch 'upstream/master'
+691a89a restarted video-ga because lost it the first time
+53db575 Merge pull request #101 from neelabhg/update_jor1k
