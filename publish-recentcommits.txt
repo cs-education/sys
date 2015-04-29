@@ -1,5 +1,5 @@
-ba7c3ea will now test ga tracking
-033ce13 is master branch broken?
-ff61ad5 why is it broken??
-d069281 Merge remote-tracking branch 'upstream/master'
-691a89a restarted video-ga because lost it the first time
+d0ff0e7 Merge pull request #106 from neelabhg/ui_and_other_polishing
+c68a641 Fix style errors. Always run `grunt travis` before opening a PR!
+1611adf Add logo information to the license
+3edc3e2 Add logo information to the license
+251e021 give more space to doc pane by default

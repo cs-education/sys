@@ -39,7 +39,13 @@ function CopyBinary(to, from, size, buffersrc, bufferdest) {
 
 function LoadBinaryResource(url, OnSuccess, OnError) {
     var req = new XMLHttpRequest();
-    req.open('GET', url, true);
+    // open might fail, when we try to open an unsecure address, when the main page is secure
+    try {
+        req.open('GET', url, true);
+    } catch(err) {
+        OnError(err);
+        return;
+    }
     req.responseType = "arraybuffer";
     req.onreadystatechange = function () {
         if (req.readyState != 4) {
@@ -56,15 +62,6 @@ function LoadBinaryResource(url, OnSuccess, OnError) {
             OnError("Error: No data received from: " + url);
         }
     };
-    /*
-        req.onload = function(e)
-        {
-                var arrayBuffer = req.response;
-                if (arrayBuffer) {
-                    OnLoadFunction(arrayBuffer);
-                }
-        };
-    */
     req.send(null);
 }
 

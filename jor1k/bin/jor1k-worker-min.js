@@ -9516,8 +9516,8 @@ function FSLoader(filesystem) {
 }
 
 FSLoader.prototype.HandleDirContents = function(list, parentid) {
-    for (var tag of list) {
-         var inode;
+    for (var i in list) {
+         var tag = list[i];
 
          var id = this.fs.Search(parentid, tag.name);
          if (id != -1) {
@@ -9529,7 +9529,7 @@ FSLoader.prototype.HandleDirContents = function(list, parentid) {
              }
          }
 
-         inode = this.fs.CreateInode();
+         var inode = this.fs.CreateInode();
          inode.name = tag.name;
          inode.uid = tag.uid|0;
          inode.gid = tag.gid|0;
@@ -10579,7 +10579,13 @@ function CopyBinary(to, from, size, buffersrc, bufferdest) {
 
 function LoadBinaryResource(url, OnSuccess, OnError) {
     var req = new XMLHttpRequest();
-    req.open('GET', url, true);
+    // open might fail, when we try to open an unsecure address, when the main page is secure
+    try {
+        req.open('GET', url, true);
+    } catch(err) {
+        OnError(err);
+        return;
+    }
     req.responseType = "arraybuffer";
     req.onreadystatechange = function () {
         if (req.readyState != 4) {
@@ -10596,15 +10602,6 @@ function LoadBinaryResource(url, OnSuccess, OnError) {
             OnError("Error: No data received from: " + url);
         }
     };
-    /*
-        req.onload = function(e)
-        {
-                var arrayBuffer = req.response;
-                if (arrayBuffer) {
-                    OnLoadFunction(arrayBuffer);
-                }
-        };
-    */
     req.send(null);
 }
 
