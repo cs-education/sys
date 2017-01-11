@@ -1,5 +1,5 @@
-d0ff0e7 Merge pull request #106 from neelabhg/ui_and_other_polishing
-c68a641 Fix style errors. Always run `grunt travis` before opening a PR!
-1611adf Add logo information to the license
-3edc3e2 Add logo information to the license
-251e021 give more space to doc pane by default
+7fb202f Merge pull request #159 from cs-education/revert-152-gcc_urandom_silence
+2eac838 Merge pull request #158 from cs-education/fb_delete_home
+e9f725a Revert "Initialize /dev/urandom in TTY1 before user control"
+c3c5302 Merge pull request #157 from cs-education/clean_up_css
+09942e0 Merge pull request #152 from cs-education/gcc_urandom_silence
