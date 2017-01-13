@@ -1,5 +1,5 @@
-7fb202f Merge pull request #159 from cs-education/revert-152-gcc_urandom_silence
-2eac838 Merge pull request #158 from cs-education/fb_delete_home
-e9f725a Revert "Initialize /dev/urandom in TTY1 before user control"
-c3c5302 Merge pull request #157 from cs-education/clean_up_css
-09942e0 Merge pull request #152 from cs-education/gcc_urandom_silence
+91815e3 Merge pull request #170 from neelabhg/code-style
+ba46cc6 Fix GccOutputParser test code
+dd091f0 Pull updates from master
+99f85a4 Fix more ESLint issues
+adf4dfe Fix more ESLint issues
