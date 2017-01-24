@@ -1,5 +1,5 @@
-91815e3 Merge pull request #170 from neelabhg/code-style
-ba46cc6 Fix GccOutputParser test code
-dd091f0 Pull updates from master
-99f85a4 Fix more ESLint issues
-adf4dfe Fix more ESLint issues
+84a6bb8 Merge pull request #173 from neelabhg/fixes
+94e8556 Fix broken CI build
+7a8c7fc Fix test config after Babel and eslint upgrade
+899434b Update and use non-react version of Airbnb config
+5f25eaf Upgrade to Babel 6
